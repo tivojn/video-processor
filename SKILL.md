@@ -187,24 +187,49 @@ The dubbing system uses a 3-step pipeline that scales to 1500+ segments:
 - Soft subtitle tracks (toggle in player)
 - Resume support (skips already-generated segments)
 
-### Voice Options
+### TTS Engine Selection
 
-**edge-tts voices (default for most languages):**
-- English: `en-US-BrianNeural` (young male, default), `en-US-JennyNeural` (female)
-- Chinese: `zh-CN-YunxiNeural` (male), `zh-CN-XiaoxiaoNeural` (female)
-- Spanish: `es-ES-AlvaroNeural`, French: `fr-FR-HenriNeural`
-- Japanese, German, Italian, Portuguese, Korean, Russian, Arabic, Hindi, Turkish
-- Full list: `edge-tts --list-voices`
+**Default: edge-tts** — Used automatically unless the user explicitly requests otherwise.
+- Male default: `en-US-BrianMultilingualNeural` (Brian Multilingual)
+- Female default: `en-US-EmmaMultilingualNeural` (Emma Multilingual)
+- These multilingual voices handle all target languages natively
+- If user doesn't specify gender, default to Brian Multilingual (Male)
+- Full voice list: `edge-tts --list-voices`
 
-**Kokoro voices (local, no internet):**
+**Kokoro (local, no internet)** — Only used when the user explicitly asks for Kokoro.
+- Trigger phrases: "use Kokoro", "use local TTS", "offline TTS"
 - English: `am_michael`, `am_adam`, `af_heart`
 - Chinese: `zf_001` (and 100+ Chinese voices)
 
-**Voicebox (voice cloning):**
+**Voicebox (voice cloning/design)** — Used when the user requests a specific voice persona, cloned voice, or voice description. Three scenarios:
+
+**Scenario A: Cloned voice** — User asks for a known cloned voice (e.g., "use Trump's voice")
+- Search for the existing clone voice profile in voicebox
+- Use it directly for TTS
+- Example: "Dub this video using Trump's voice" → find `Trump_Voice` clone profile → TTS with it
+
+**Scenario B: Named designed voice** — User asks for a named voice persona (e.g., "use Panic Granny voice")
+- Search voicebox for an existing designed profile matching the name
+- If found → use it for TTS
+- If not found → design the voice profile first via voicebox, then use it for TTS
+- Example: "Dub this using Panic Granny voice" → search for `Panic_Granny` profile → use if exists, design if not → TTS
+
+**Scenario C: Voice description** — User describes voice characteristics (e.g., "a male mid-aged calm narrator")
+- Use voicebox to design a new voice profile matching the description
+- Then use the designed profile for TTS
+- Example: "Dub this with a calm male narrator" → voicebox designs voice with those traits → TTS with it
+
 ```bash
-# Dub with any cloned voice profile
+# Dub with a cloned/designed voice profile
 generate_tts_and_dub.sh video.mp4 original.srt translated.srt chinese "Trump_Voice"
 ```
+
+**Selection logic summary:**
+1. User names a cloned voice → **voicebox** (find clone profile → TTS)
+2. User names a voice persona → **voicebox** (find or design profile → TTS)
+3. User describes voice traits → **voicebox** (design profile → TTS)
+4. User explicitly asks for Kokoro → **Kokoro**
+5. Everything else → **edge-tts** (Brian Multilingual male / Emma Multilingual female)
 
 ### Same-Language Re-voicing
 
