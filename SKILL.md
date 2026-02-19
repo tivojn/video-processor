@@ -203,25 +203,30 @@ The dubbing system uses a 3-step pipeline that scales to 1500+ segments:
 
 **Voicebox (voice cloning/design)** — Used when the user requests a specific voice persona, cloned voice, or voice description. Three scenarios:
 
+**Profile lookup:** Voicebox stores all profiles in `~/.claude/skills/voicebox/data/profiles.json`.
+Each profile has a `name`, `type` ("cloned" or "designed"), and `language`.
+- List all profiles: `uv run ~/.claude/skills/voicebox/scripts/voicebox.py list`
+- Lookup is case-insensitive with substring fallback (e.g., "trump" matches "Trump", "panic" matches "Panic Granny")
+
 **Scenario A: Cloned voice** — User asks for a known cloned voice (e.g., "use Trump's voice")
-- Search for the existing clone voice profile in voicebox
-- Use it directly for TTS
-- Example: "Dub this video using Trump's voice" → find `Trump_Voice` clone profile → TTS with it
+- Run `voicebox.py list` to find the existing clone profile by name
+- If found (type: "cloned") → use it directly for TTS
+- Example: "Dub this video using Trump's voice" → lookup "Trump" → finds cloned profile → TTS with it
 
 **Scenario B: Named designed voice** — User asks for a named voice persona (e.g., "use Panic Granny voice")
-- Search voicebox for an existing designed profile matching the name
+- Run `voicebox.py list` to search for an existing designed profile by name
 - If found → use it for TTS
-- If not found → design the voice profile first via voicebox, then use it for TTS
-- Example: "Dub this using Panic Granny voice" → search for `Panic_Granny` profile → use if exists, design if not → TTS
+- If not found → invoke voicebox skill to design the voice profile first, then use it for TTS
+- Example: "Dub this using Panic Granny voice" → lookup "Panic Granny" → found (type: "designed") → TTS with it
 
 **Scenario C: Voice description** — User describes voice characteristics (e.g., "a male mid-aged calm narrator")
-- Use voicebox to design a new voice profile matching the description
-- Then use the designed profile for TTS
-- Example: "Dub this with a calm male narrator" → voicebox designs voice with those traits → TTS with it
+- Invoke voicebox skill to design a new voice profile matching the description
+- Then use the newly created profile for TTS
+- Example: "Dub this with a calm male narrator" → voicebox designs voice with those traits → saves profile → TTS with it
 
 ```bash
 # Dub with a cloned/designed voice profile
-generate_tts_and_dub.sh video.mp4 original.srt translated.srt chinese "Trump_Voice"
+generate_tts_and_dub.sh video.mp4 original.srt translated.srt chinese "Trump"
 ```
 
 **Selection logic summary:**
